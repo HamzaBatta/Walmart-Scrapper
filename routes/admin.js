@@ -20,24 +20,22 @@ let browser;
 async function scrapeData(url,page){
 
     try{
+        
         await page.goto(url, { waitUntil: 'load', timeout: 0});
+        await page.waitForSelector('h1', { timeout: 10000000 });
         const html = await page.evaluate( () => document.body.innerHTML );
         const $ = await cheerio.load(html);
 
-        let title = $('h1').innerText
-        let price = $('span[itemprop="price"]').innerText
+        let title = $('h1').text().trim();
+        let rawPrice = $('span[itemprop="price"]').text().trim();
+        let price = rawPrice.replace(/^(Now|Was)\s*/i, '').trim();
 
-        let seller = ''
-        let checkSeller = $('a[data-testid="seller-name-link"]').innerText
-        if(checkSeller){
-            seller = checkSeller.text()
-        }
-        if(seller=== ''){
-            seller = $('span[data-testid="product-seller-info"]').innerText
-        }
+        let seller =
+        $('a[data-testid="seller-name-link"]').text().trim() ||
+        $('span[data-testid="product-seller-info"]').text().trim();
 
         let outOfStock = '';
-        let checkOutOfStock = $('.lh-copy.pt2-m.flex.f4.items-center .b.gray.pr3.pt2-m.nowrap').innerText;
+        let checkOutOfStock = $('.lh-copy.pt2-m.flex.f4.items-center .b.gray.pr3.pt2-m.nowrap').text().trim();
         if (checkOutOfStock){
             outOfStock = checkOutOfStock.text();
         }
@@ -48,7 +46,6 @@ async function scrapeData(url,page){
         if (checkDeliveryNotAvailable){
             deliveryNotAvailable = checkDeliveryNotAvailable.text();
         }
-
         let stock = '';
         if(!(seller.includes('Walmart') || outOfStock.includes('Out of stock') || deliveryNotAvailable.includes('Not available'))){
             stock = 'Out of stock';
