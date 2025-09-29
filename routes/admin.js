@@ -37,20 +37,22 @@ async function scrapeData(url,page){
         let outOfStock = '';
         let checkOutOfStock = $('.lh-copy.pt2-m.flex.f4.items-center .b.gray.pr3.pt2-m.nowrap').text().trim();
         if (checkOutOfStock){
-            outOfStock = checkOutOfStock.text();
+            outOfStock = checkOutOfStock;
         }
         
+        let deliveryOptions = true;
+        
+        let delivery = $('div[data-seo-id="fulfillment-Delivery-intent"]').text().trim();
+        let shipping = $('div[data-seo-id="fulfillment-Shipping-intent"]').text().trim();
+        let pickup = $('div[data-seo-id="fulfillment-Pickup-intent"]').text().trim();
 
-        let deliveryNotAvailable = '';
-        let checkDeliveryNotAvailable = $('div[data-seo-id="fulfillment-Delivery-intent"]').innerText;
-        if (checkDeliveryNotAvailable){
-            deliveryNotAvailable = checkDeliveryNotAvailable.text();
+        if(delivery.includes('Not available') && shipping.includes('Out of stock') && pickup.includes('Not available')){
+            deliveryOptions = false
         }
-        let stock = '';
-        if(!(seller.includes('Walmart') || outOfStock.includes('Out of stock') || deliveryNotAvailable.includes('Not available'))){
+        
+        let stock = 'In stock';
+        if(!(seller.includes('Walmart')) || outOfStock.includes('Out of stock') || deliveryOptions == false){
             stock = 'Out of stock';
-        }else {
-            stock = 'In Stock';
         }
 
         return {title,price,stock,url};
@@ -108,6 +110,24 @@ router.get('/product/search', isAuthenticated, (req,res) => {
     }else{
         res.render('./admin/search', {productData : ''})
     }
+})
+
+router.get('/products/instock', isAuthenticated, (req,res) => {
+    Product.find({newStock: "In stock"}).then(products => {
+        res.render('./admin/instock', {products: products});
+    }).catch(err =>{
+        req.flash('error_msg', 'Error occured while fetching the data');
+        res.redirect('/dashboard');
+    })
+})
+
+router.get('/products/outofstock', isAuthenticated, (req,res) => {
+    Product.find({newStock: "Out of stock"}).then(products => {
+        res.render('./admin/outofstock', {products: products});
+    }).catch(err =>{
+        req.flash('error_msg', 'Error occured while fetching the data');
+        res.redirect('/dashboard');
+    })
 })
 
 
