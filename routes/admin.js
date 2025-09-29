@@ -60,6 +60,7 @@ async function scrapeData(url,page){
     }
 }
 
+//GET routes
 router.get('/product/new', isAuthenticated, async(req, res) => {
     try{
         let url = req.query.search
@@ -90,6 +91,56 @@ router.get('/product/new', isAuthenticated, async(req, res) => {
         res.redirect('/product/new');
     }
 });
+
+router.get('/product/search', isAuthenticated, (req,res) => {
+    let userSKU = req.query.sku;
+    if(userSKU){
+        Product.findOne({sku:userSKU}).then(product => {
+            if(!product){
+                req.flash('error_msg', 'Product not found');
+                res.redirect('/product/search');
+            }
+            res.render('./admin/search' , {productData: product})
+        }).catch(err =>{
+            req.flash('error_msg', 'Error occured while fetching the data');
+            res.redirect('/product/search');
+        })
+    }else{
+        res.render('./admin/search', {productData : ''})
+    }
+})
+
+
+//POST routes
+router.post('/product/new',isAuthenticated,(req,res)=> {
+    let {title,price,stock,url,sku} = req.body;
+
+    let newProduct = {
+        title: title,
+        newPrice: price,
+        oldPrice: price,
+        newStock: stock,
+        oldStock: stock,
+        sku: sku,
+        company: "Walmart",
+        url: url,
+        updateStatus: "Updated"
+    }
+
+    Product.findOne({sku : sku}).then(product => {
+        if(product){
+            req.flash('error_msg',"Product already exists in database")
+            return res.redirect('/product/new')
+        }
+        Product.create(newProduct).then(product => {
+            req.flash('success_msg',"Product added successfully in database")
+            return res.redirect('/product/new')
+        }).catch(err => {
+            req.flash('error_msg',"ERROR: " + err)
+            res.redirect('/product/new');
+        })
+    })
+})
 
 
 module.exports = router;

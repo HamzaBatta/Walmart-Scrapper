@@ -1,0 +1,27 @@
+<!-- filepath: c:\Users\Hamza\Desktop\Programming\Udemy Courses\Node.JS\projects\Walmart Scrapper\views\admin\search.ejs -->
+<%- include('../partials/header') -%>
+
+<div class="col-9">
+    <div class="container p-3 w-100">
+        <h1 class="mt-5 mb-4">Search Product</h1>
+        <%- include('../partials/messages') -%>
+        <form class="mt-2" id="newpostform" action="/product/search" method="GET">
+            <div class="row mt-5 justify-content-center d-flex">
+                <div class="col-6">
+                    <input type="text" class="form-control" name="sku" placeholder="Enter Product SKU">
+                </div>
+            </div>
+            <div class="justify-content-center d-flex mt-4">
+                <button id="fetchBtn" class="btn btn-danger w-25 py-2">Search Product</button>
+            </div>
+        </form>
+        <div class="ml-5 text-left mt-5">
+            <span>Title: </span><span><%= productData.title%></span><br>
+            <span>Price: </span><span><%= productData.newPrice%></span><br>
+            <span>Stock: </span><span><%= productData.oldStock%></span><br>
+            <span>SKU: </span><span><%= productData.sku%></span><br>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') -%>
