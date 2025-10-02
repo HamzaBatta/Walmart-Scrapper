@@ -63,6 +63,16 @@ async function scrapeData(url,page){
 }
 
 //GET routes
+
+router.get('/dashboard', isAuthenticated,(req, res) => {
+
+    Product.find({}).then(products => {
+        res.render('./admin/dashboard',{products : products}); 
+    })
+    
+});
+
+
 router.get('/product/new', isAuthenticated, async(req, res) => {
     try{
         let url = req.query.search
@@ -124,6 +134,42 @@ router.get('/products/instock', isAuthenticated, (req,res) => {
 router.get('/products/outofstock', isAuthenticated, (req,res) => {
     Product.find({newStock: "Out of stock"}).then(products => {
         res.render('./admin/outofstock', {products: products});
+    }).catch(err =>{
+        req.flash('error_msg', 'Error occured while fetching the data');
+        res.redirect('/dashboard');
+    })
+})
+
+router.get('/products/pricechanged', isAuthenticated, (req,res) => {
+    Product.find({}).then(products => {
+        res.render('./admin/pricechanged', {products: products});
+    }).catch(err =>{
+        req.flash('error_msg', 'Error occured while fetching the data');
+        res.redirect('/dashboard');
+    })
+})
+
+router.get('/products/backinstock', isAuthenticated, (req,res) => {
+    Product.find({$and: [{oldStock : 'Out of stock'}, {newStock : 'In stock'}]}).then(products => {
+        res.render('./admin/backinstock', {products: products});
+    }).catch(err =>{
+        req.flash('error_msg', 'Error occured while fetching the data');
+        res.redirect('/dashboard');
+    })
+})
+
+router.get('/products/updated', isAuthenticated, (req,res) => {
+    Product.find({updateStatus: "Updated"}).then(products => {
+        res.render('./admin/updatedproducts', {products: products});
+    }).catch(err =>{
+        req.flash('error_msg', 'Error occured while fetching the data');
+        res.redirect('/dashboard');
+    })
+})
+
+router.get('/products/notupdated', isAuthenticated, (req,res) => {
+    Product.find({updateStatus: "Not Updated"}).then(products => {
+        res.render('./admin/notupdatedproducts', {products: products});
     }).catch(err =>{
         req.flash('error_msg', 'Error occured while fetching the data');
         res.redirect('/dashboard');
