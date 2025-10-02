@@ -27,6 +27,9 @@ async function scrapeData(url,page){
         const $ = await cheerio.load(html);
 
         let title = $('h1').text().trim();
+        if(title.includes('Robot or human?')){
+            return console.log('Cannot scrape, captcha problem')
+        }
         let rawPrice = $('span[itemprop="price"]').text().trim();
         let price = rawPrice.replace(/^(Now|Was)\s*/i, '').trim();
 
@@ -162,7 +165,7 @@ router.get('/products/updated', isAuthenticated, (req,res) => {
     Product.find({updateStatus: "Updated"}).then(products => {
         res.render('./admin/updatedproducts', {products: products});
     }).catch(err =>{
-        req.flash('error_msg', 'Error occured while fetching the data');
+        req.flash('error_msg', 'Error: ' + err);
         res.redirect('/dashboard');
     })
 })
@@ -171,10 +174,16 @@ router.get('/products/notupdated', isAuthenticated, (req,res) => {
     Product.find({updateStatus: "Not Updated"}).then(products => {
         res.render('./admin/notupdatedproducts', {products: products});
     }).catch(err =>{
-        req.flash('error_msg', 'Error occured while fetching the data');
+        req.flash('error_msg', 'Error: ' + err);
         res.redirect('/dashboard');
     })
 })
+
+router.get('/update', isAuthenticated , (req,res) => {
+    res.render('./admin/update', ({message : ''}))
+})
+
+
 
 
 //POST routes
@@ -206,6 +215,47 @@ router.post('/product/new',isAuthenticated,(req,res)=> {
             res.redirect('/product/new');
         })
     })
+})
+
+router.post('/update', isAuthenticated , async(req,res) => {
+    try{
+        res.render('./admin/update', {message : "update started"});
+
+        Product.find({}).then(async products => {
+            for(let i=0; i<products.length; i++){
+                Product.updateOne({'url' : products[i].url},
+                     {$set: {
+                        'oldPrice' : products[i].newPrice,
+                        'oldStock' : products[i].newStock,
+                        'updateStatus' : 'Not Updated'
+                    }}).then(products => {})
+            }
+
+            browser = await puppeteer.launch({headless : false });
+            const page = await browser.newPage();
+
+            for(let i=0; i<products.length; i++){
+                let result = await scrapeData(products[i].url,page);
+                Product.updateOne({'url' : products[i].url},
+                     {$set: {
+                        'title' : result.title,
+                        'newPrice' : result.newPrice,
+                        'newStock' : result.stock,
+                        'updateStatus' : 'Updated'
+                    }}).then(products => {})
+
+            }
+            browser.close()
+
+        }).catch(err => {
+            req.flash('error_msg', 'Error: ' + err);
+            res.redirect('/dashboard');
+        })
+
+    }catch(err){
+        req.flash('error_msg', 'Error: ' + err);
+        res.redirect('/dashboard');
+    }
 })
 
 
