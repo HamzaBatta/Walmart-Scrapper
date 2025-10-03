@@ -258,5 +258,18 @@ router.post('/update', isAuthenticated , async(req,res) => {
     }
 })
 
+//DELETE routes
+router.delete('/delete/product/:id' , (req,res) => {
+    let searchQuery = {_id : req.params.id}
+
+    Product.deleteOne(searchQuery).then(product => {
+        req.flash('success_msg', 'Product deleted succesffully.');
+        res.redirect('/dashboard');
+    }).catch(err => {
+        req.flash('error_msg', 'Error: ' + err);
+        res.redirect('/dashboard');
+    })
+});
+
 
 module.exports = router;
